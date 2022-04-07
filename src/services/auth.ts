@@ -86,3 +86,7 @@ export async function resetPassword(payload: ResetPasswordProps)
 export async function forgotPassword(email: string): Promise<void> {
     await api.post('/user/forgot-password', { email });
 }
+
+export async function validateResetCode(email: string, code: string): Promise<void> {
+    await api.post('/user/validate-token', { email, token: code });
+}

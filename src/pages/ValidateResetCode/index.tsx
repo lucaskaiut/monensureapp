@@ -18,14 +18,17 @@ type ValidateResetProp = NativeStackNavigationProp<AuthStackParamList, 'Validate
 const ValidateResetCode: React.FC = () => {
     const [code, setCode] = React.useState('');
 
-    const { setResetCode } = useAuth();
+    const { setResetCode, validateResetCode } = useAuth();
 
     const navigation = useNavigation<ValidateResetProp>();
 
-    function handleUserConfirmation(){
+    async function handleUserConfirmation(){
         if(code){
             setResetCode(code);
-            navigation.navigate("ResetPassword");
+
+            if(await validateResetCode()){
+                navigation.navigate("ResetPassword");
+            }
         }
     }
 

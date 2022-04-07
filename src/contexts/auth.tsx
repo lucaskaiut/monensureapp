@@ -53,6 +53,7 @@ interface AuthContextData {
     setResetCode(resetCode: string): void;
     setResetEmail(resetEmail: string): void;
     resetPassword(payload: ResetPasswordProps): Promise<boolean>;
+    validateResetCode(): Promise<boolean>;
 }
 
 interface ResetPasswordProps {
@@ -65,25 +66,25 @@ interface ResetPasswordProps {
 interface CommonHeaderProperties extends HeadersDefaults {
     Authorization: string;
 }
- 
+
 
 const AuthContext = React.createContext<AuthContextData>({} as AuthContextData);
 
 export const AuthProvider: React.FC = ({ children }) => {
 
-    const [user, setUser] = React.useState<UserData | null>(null);   
-    const [email, setEmail] = React.useState(''); 
-    const [code, setCode] = React.useState(''); 
+    const [user, setUser] = React.useState<UserData | null>(null);
+    const [email, setEmail] = React.useState('');
+    const [code, setCode] = React.useState('');
 
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
 
     React.useEffect(() => {
-        async function loadStorageData(){
+        async function loadStorageData() {
             const storagedUser = await AsyncStorage.getItem('@RNAuth:user');
             const storagedToken = await AsyncStorage.getItem('@RNAuth:token');
 
-            if(storagedToken && storagedUser){
-                
+            if (storagedToken && storagedUser) {
+
                 api.defaults.headers = {
                     Authorization: `Bearer ${storagedToken}`
                 } as CommonHeaderProperties;
@@ -100,12 +101,12 @@ export const AuthProvider: React.FC = ({ children }) => {
 
         try {
             const response = await auth.signIn(user);
-        
+
             setUser(response.user);
-    
+
             await AsyncStorage.setItem('@RNAuth:user', JSON.stringify(response.user));
             await AsyncStorage.setItem('@RNAuth:token', response.token);
-            
+
         } catch (error: any) {
             showMessage({
                 message: `${error.response?.data?.message}`,
@@ -132,15 +133,14 @@ export const AuthProvider: React.FC = ({ children }) => {
         }
 
     }
-    
+
     function signOut() {
         AsyncStorage.clear().then(() => {
             setUser(null);
         });
     }
 
-    async function forgotPassword (email: string): Promise<boolean>
-    {
+    async function forgotPassword(email: string): Promise<boolean> {
         try {
             await auth.forgotPassword(email);
 
@@ -155,19 +155,18 @@ export const AuthProvider: React.FC = ({ children }) => {
             return false;
         }
 
-        
+
     }
 
-    function setResetCode(resetCode: string){
+    function setResetCode(resetCode: string) {
         setCode(resetCode);
     }
 
-    function setResetEmail(resetEmail: string){
+    function setResetEmail(resetEmail: string) {
         setEmail(resetEmail);
     }
 
-    async function resetPassword(payload: ResetPasswordProps): Promise<boolean>
-    {
+    async function resetPassword(payload: ResetPasswordProps): Promise<boolean> {
         try {
             await auth.resetPassword(payload);
 
@@ -187,9 +186,39 @@ export const AuthProvider: React.FC = ({ children }) => {
         }
     }
 
+    async function validateResetCode() {
+        try {
+            await auth.validateResetCode(email, code);
+
+            return true;
+        } catch (error: any) {
+            showMessage({
+                message: error.response?.data?.message,
+                type: "danger"
+            });
+
+            return false;
+        }
+    }
+
     return (
-        <AuthContext.Provider value={ { signed: !!user, user, email, code, signIn, register, signOut, forgotPassword, setResetCode, setResetEmail, resetPassword } }>
-            { children }
+        <AuthContext.Provider value={
+            {
+                signed: !!user,
+                user,
+                email,
+                code,
+                signIn,
+                register,
+                signOut,
+                forgotPassword,
+                setResetCode,
+                setResetEmail,
+                resetPassword,
+                validateResetCode
+            }
+        }>
+            {children}
         </AuthContext.Provider>
     );
 }
