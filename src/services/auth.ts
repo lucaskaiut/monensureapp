@@ -1,7 +1,5 @@
 import api from "./api";
 
-import { showMessage, hideMessage } from "react-native-flash-message";
-
 interface LoginResponse {
     token: string;
     user: {
@@ -71,4 +69,8 @@ export async function register(user: RegisterProps | null): Promise<RegisterResp
     return {
         ...request.data.data
     }
+}
+
+export async function forgotPassword(email: string): Promise<void> {
+    await api.post('/user/forgot-password', { email });
 }

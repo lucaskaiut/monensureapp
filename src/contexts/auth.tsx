@@ -1,9 +1,13 @@
 import * as React from 'react';
 import AsyncStorage from '@react-native-community/async-storage';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import api from '../services/api';
 import * as auth from '../services/auth';
 import { showMessage } from 'react-native-flash-message';
+import { useNavigation } from '@react-navigation/native';
+import { AuthStackParamList } from '../routes/auth.routes';
+import { HeadersDefaults } from 'axios';
 
 interface SignInProps {
     email: string,
@@ -40,18 +44,24 @@ interface UserData {
 interface AuthContextData {
     signed: boolean;
     user: UserData | null;
-    loading: boolean;
     signIn(user: SignInProps | null): Promise<void>;
     register(user: RegisterProps | null): Promise<void>;
     signOut(): void;
+    forgotPassword(email: string): Promise<boolean>;
 }
+
+interface CommonHeaderProperties extends HeadersDefaults {
+    Authorization: string;
+}
+ 
 
 const AuthContext = React.createContext<AuthContextData>({} as AuthContextData);
 
-export const AuthProvider: React.FC = ({ children, navigation }) => {
+export const AuthProvider: React.FC = ({ children }) => {
 
     const [user, setUser] = React.useState<UserData | null>(null);    
-    const [loading, setLoading] = React.useState(true);
+
+    const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
 
     React.useEffect(() => {
         async function loadStorageData(){
@@ -59,18 +69,20 @@ export const AuthProvider: React.FC = ({ children, navigation }) => {
             const storagedToken = await AsyncStorage.getItem('@RNAuth:token');
 
             if(storagedToken && storagedUser){
-                api.defaults.headers.Authorization = `Bearer ${storagedToken}`; 
+                
+                api.defaults.headers = {
+                    Authorization: `Bearer ${storagedToken}`
+                } as CommonHeaderProperties;
+
                 setUser(JSON.parse(storagedUser));
             }
 
-            setLoading(false);
         }
 
         loadStorageData();
     }, []);
 
     async function signIn(user: SignInProps | null) {
-        setLoading(true);
 
         try {
             const response = await auth.signIn(user);
@@ -80,18 +92,16 @@ export const AuthProvider: React.FC = ({ children, navigation }) => {
             await AsyncStorage.setItem('@RNAuth:user', JSON.stringify(response.user));
             await AsyncStorage.setItem('@RNAuth:token', response.token);
             
-        } catch (error) {
+        } catch (error: any) {
             showMessage({
                 message: `${error.response?.data?.message}`,
                 type: "danger",
             });
         }
 
-        setLoading(false);
     }
 
     async function register(user: RegisterProps | null) {
-        setLoading(true);
 
         try {
             const response = await auth.register(user);
@@ -100,28 +110,42 @@ export const AuthProvider: React.FC = ({ children, navigation }) => {
                 message: "Usuário criado com sucesso. Faça login para continuar.",
                 type: "success",
             });
-        } catch (error) {
+        } catch (error: any) {
             showMessage({
                 message: `${error.response?.data?.message}`,
                 type: "danger",
             });
         }
 
-        setLoading(false);
     }
     
     function signOut() {
-        setLoading(true);
-
         AsyncStorage.clear().then(() => {
             setUser(null);
         });
+    }
 
-        setLoading(false);
+    async function forgotPassword (email: string): Promise<boolean>
+    {
+        try {
+            await auth.forgotPassword(email);
+
+            return true;
+        } catch (error: any) {
+
+            showMessage({
+                message: `${error.response?.data?.message}`,
+                type: "danger",
+            });
+
+            return false;
+        }
+
+        
     }
 
     return (
-        <AuthContext.Provider value={ { signed: !!user, user, loading, signIn, register, signOut } }>
+        <AuthContext.Provider value={ { signed: !!user, user, signIn, register, signOut, forgotPassword } }>
             { children }
         </AuthContext.Provider>
     );

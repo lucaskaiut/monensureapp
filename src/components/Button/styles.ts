@@ -8,6 +8,7 @@ export const Container = styled.TouchableOpacity`
   background-color: ${({theme}) => theme.COLORS.DARK};
   margin-bottom: 8px;
   border-radius: 8px;
+  direction: row;
 `;
 
 export const Title = styled.Text`

@@ -1,12 +1,18 @@
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as React from 'react';
 import { Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { useAuth } from '../../contexts/auth';
+import { AuthStackParamList } from '../../routes/auth.routes';
+import theme from '../../theme';
 
 import { Container, Content } from './styles';
 
-const Register: React.FC = ({ navigation }) => {
+type RegisterProp = NativeStackNavigationProp<AuthStackParamList, 'Register'>
+
+const Register: React.FC = () => {
     const [groupName, setGroupName] = React.useState("");
     const [firstname, setFirstname] = React.useState("");
     const [lastname, setLastname] = React.useState("");
@@ -14,6 +20,8 @@ const Register: React.FC = ({ navigation }) => {
     const [password, setPassword] = React.useState("");
     const [passwordConfirmation, setPasswordConfirmation] = React.useState("");
     const [phone, setPhone] = React.useState("");
+
+    const navigation = useNavigation<RegisterProp>();
 
     const { register } = useAuth();
 
@@ -75,12 +83,11 @@ const Register: React.FC = ({ navigation }) => {
                     />
                     <Input
                         placeholder="Telefone"
-                        secureTextEntry
                         value={phone}
                         onChangeText={(value) => setPhone(value)}
                     />
                     <Button onPress={handleUserRegister} title="Cadastrar" />
-                    <Button onPress={handleBack} title="Voltar" />
+                    <Button onPress={handleBack} title="Voltar" style={{ backgroundColor: theme.COLORS.DANGER }}/>
                 </Content>
             </TouchableWithoutFeedback>
 
