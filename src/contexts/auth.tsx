@@ -44,10 +44,22 @@ interface UserData {
 interface AuthContextData {
     signed: boolean;
     user: UserData | null;
+    email: string;
+    code: string;
     signIn(user: SignInProps | null): Promise<void>;
     register(user: RegisterProps | null): Promise<void>;
     signOut(): void;
     forgotPassword(email: string): Promise<boolean>;
+    setResetCode(resetCode: string): void;
+    setResetEmail(resetEmail: string): void;
+    resetPassword(payload: ResetPasswordProps): Promise<boolean>;
+}
+
+interface ResetPasswordProps {
+    token: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
 }
 
 interface CommonHeaderProperties extends HeadersDefaults {
@@ -59,7 +71,9 @@ const AuthContext = React.createContext<AuthContextData>({} as AuthContextData);
 
 export const AuthProvider: React.FC = ({ children }) => {
 
-    const [user, setUser] = React.useState<UserData | null>(null);    
+    const [user, setUser] = React.useState<UserData | null>(null);   
+    const [email, setEmail] = React.useState(''); 
+    const [code, setCode] = React.useState(''); 
 
     const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
 
@@ -144,8 +158,37 @@ export const AuthProvider: React.FC = ({ children }) => {
         
     }
 
+    function setResetCode(resetCode: string){
+        setCode(resetCode);
+    }
+
+    function setResetEmail(resetEmail: string){
+        setEmail(resetEmail);
+    }
+
+    async function resetPassword(payload: ResetPasswordProps): Promise<boolean>
+    {
+        try {
+            await auth.resetPassword(payload);
+
+            showMessage({
+                message: "Senha alterada com sucesso. Faça login para continuar",
+                type: "success",
+            });
+
+            return true;
+        } catch (error: any) {
+            showMessage({
+                message: `${error.response?.data?.message}`,
+                type: "danger",
+            });
+
+            return false;
+        }
+    }
+
     return (
-        <AuthContext.Provider value={ { signed: !!user, user, signIn, register, signOut, forgotPassword } }>
+        <AuthContext.Provider value={ { signed: !!user, user, email, code, signIn, register, signOut, forgotPassword, setResetCode, setResetEmail, resetPassword } }>
             { children }
         </AuthContext.Provider>
     );

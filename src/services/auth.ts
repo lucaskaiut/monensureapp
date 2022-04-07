@@ -52,6 +52,13 @@ interface RegisterProps {
     phone: string
 }
 
+interface ResetPasswordProps {
+    token: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+}
+
 export async function signIn(user: SignInProps | null): Promise<LoginResponse> {
 
     const response = await api.post('/user/login', { ...user });
@@ -69,6 +76,11 @@ export async function register(user: RegisterProps | null): Promise<RegisterResp
     return {
         ...request.data.data
     }
+}
+
+export async function resetPassword(payload: ResetPasswordProps)
+{
+    await api.post('/user/reset-password', {...payload});
 }
 
 export async function forgotPassword(email: string): Promise<void> {

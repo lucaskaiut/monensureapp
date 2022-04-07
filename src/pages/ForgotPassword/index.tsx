@@ -16,7 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 type ForgotPasswordProp = NativeStackNavigationProp<AuthStackParamList, 'ForgotPassword'>
 
 const ForgotPassword: React.FC = () => {
-    const { forgotPassword } = useAuth();
+    const { forgotPassword, setResetEmail } = useAuth();
     const [email, setEmail] = React.useState('');
     const [loading, setLoading] = React.useState(false);
 
@@ -30,6 +30,7 @@ const ForgotPassword: React.FC = () => {
         setLoading(false);
 
         if(response){
+            setResetEmail(email);
             navigation.navigate("ValidateResetCode");
         }
     }
