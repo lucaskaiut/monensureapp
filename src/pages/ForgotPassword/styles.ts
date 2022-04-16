@@ -15,7 +15,8 @@ export const Content = styled.View`
 
 export const Image = styled.ImageBackground`
     width: 100%;
-    height: 250px;
+    height: 200px;
+    margin-bottom: 60px;
 `;
 
 export const ForgotPasswordText = styled.Text`

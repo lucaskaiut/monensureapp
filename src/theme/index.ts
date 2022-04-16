@@ -4,7 +4,7 @@ export default {
         SECONDARY: '#F4A5AE',
         GREY: '#5A6A7B',
         WHITE: '#FFF7E1',
-        PRIMARY: '#00C49A',
+        PRIMARY: '#58C84E',
         ICE: '#F2F2F2',
         DANGER: '#F14E4E',
     },
