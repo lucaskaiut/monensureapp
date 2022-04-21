@@ -1,3 +1,5 @@
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Modal } from 'react-native-paper';
 import styled from 'styled-components/native';
 
 interface BoxProps {
@@ -75,4 +77,8 @@ export const Loading = styled.ActivityIndicator.attrs({
     color: '#999'
 })`
     margin: 30px 0;
+`;
+
+export const Touchable = styled(TouchableOpacity)`
+    align-items: center;
 `;

@@ -1,13 +1,18 @@
 import * as React from 'react';
 import { useAuth } from '../../contexts/auth';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Alert, FlatList, ListRenderItem, Touchable, TouchableOpacity, View } from 'react-native';
+import { FlatList, TouchableOpacity } from 'react-native';
+import NumberFormat from 'react-number-format';
+import { showMessage } from 'react-native-flash-message';
+import DatePicker from 'react-native-date-picker';
 
-import { Avatar, Box, Container, GroupName, Loading, Name, Text } from './styles';
+import { Avatar, Box, Container, Loading, Text, Touchable } from './styles';
 import theme from '../../theme';
 import Bill from './Bill';
-import { ScrollView } from 'react-native-gesture-handler';
-import NumberFormat from 'react-number-format';
+import api from '../../services/api';
+import Modal from '../../components/Modal';
+import { Input } from '../../components/Input';
+import moment from 'moment';
 
 interface Bills {
     id: string,
@@ -15,13 +20,16 @@ interface Bills {
         name: string,
         icon: string
     },
+    supplier: string,
     description: string,
-    supplier: {
-        id: string,
-        name: string
-    },
     amount: number,
-    due_date: string
+    due_at: string,
+    is_paid: boolean
+}
+
+interface Filters {
+    due_after?: string,
+    due_before?: string
 }
 
 const Dashboard: React.FC = () => {
@@ -29,149 +37,82 @@ const Dashboard: React.FC = () => {
     const [refreshing, setRefreshing] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
     const [showAmounts, setShowAmounts] = React.useState(false);
+    const [bills, setBills] = React.useState<Bills[]>([]);
+    const [page, setPage] = React.useState(1);
+    const [total, setTotal] = React.useState(0);
+    const [billsTotal, setBillsTotal] = React.useState(0);
+    const [filters, setFilters] = React.useState<Filters>({});
+    const [datePickerOpen, setDatePickerOpen] = React.useState(false);
+    const [modalFilter, setModalFilter] = React.useState(false);
+    const [dueAfter, setDueAfter] = React.useState(new Date());
+    const [datePickerParameter, setDatePickerParameter] = React.useState('');
 
-    const HandleSignOut = () => {
-        signOut();
+    React.useEffect(() => {
+        loadPage();
+    }, []);
+
+    async function refreshList() {
+        setRefreshing(true);
+
+        await loadPage(1, true);
+
+        setRefreshing(false);
     }
 
-    const refreshList = () => {
-        setRefreshing(true);
-        setRefreshing(false);
+    const handleChangeFilters = async (key: string, value: any) => {
+        setFilters({ ...filters, [key]: value });
     }
 
     const toggleShowAmounts = () => {
         setShowAmounts(!showAmounts);
     }
 
-    const data: Bills[] = [
-        {
-            id: "1978914655464",
-            category: {
-                name: "Alimentação",
-                icon: "cart-variant",
-            },
-            description: "Compra",
-            supplier: {
-                id: "huiodsahoiu21h3u2io3h",
-                name: "Jacomar"
-            },
-            amount: 49.13,
-            due_date: "2022-04-09"
-        },
-        {
-            id: "15678994894",
-            category: {
-                name: "Alimentação",
-                icon: "cart-variant",
-            },
-            description: "Compra",
-            supplier: {
-                id: "huiodsahoiu21h3u2io3h",
-                name: "Jacomar"
-            },
-            amount: 49.13,
-            due_date: "2022-04-09"
-        },
-        {
-            id: "197898789712165",
-            category: {
-                name: "Alimentação",
-                icon: "cart-variant",
-            },
-            description: "Compra",
-            supplier: {
-                id: "huiodsahoiu21h3u2io3h",
-                name: "Jacomar"
-            },
-            amount: 49.13,
-            due_date: "2022-04-09"
-        },
-        {
-            id: "147894798789",
-            category: {
-                name: "Alimentação",
-                icon: "cart-variant",
-            },
-            description: "Compra",
-            supplier: {
-                id: "huiodsahoiu21h3u2io3h",
-                name: "Jacomar"
-            },
-            amount: 49.13,
-            due_date: "2022-04-09"
-        },
-        {
-            id: "15648949789",
-            category: {
-                name: "Alimentação",
-                icon: "cart-variant",
-            },
-            description: "Compra",
-            supplier: {
-                id: "huiodsahoiu21h3u2io3h",
-                name: "Jacomar"
-            },
-            amount: 49.13,
-            due_date: "2022-04-09"
-        },
-        {
-            id: "21315151",
-            category: {
-                name: "Alimentação",
-                icon: "cart-variant",
-            },
-            description: "Compra",
-            supplier: {
-                id: "huiodsahoiu21h3u2io3h",
-                name: "Jacomar"
-            },
-            amount: 49.13,
-            due_date: "2022-04-09"
-        },
-        {
-            id: "21312521",
-            category: {
-                name: "Alimentação",
-                icon: "cart-variant",
-            },
-            description: "Compra",
-            supplier: {
-                id: "huiodsahoiu21h3u2io3h",
-                name: "Jacomar"
-            },
-            amount: 49.13,
-            due_date: "2022-04-09"
-        },
-        {
-            id: "65123651412",
-            category: {
-                name: "Alimentação",
-                icon: "cart-variant",
-            },
-            description: "Compra",
-            supplier: {
-                id: "huiodsahoiu21h3u2io3h",
-                name: "Jacomar"
-            },
-            amount: 49.13,
-            due_date: "2022-04-09"
-        },
-        {
-            id: "156489798789",
-            category: {
-                name: "Alimentação",
-                icon: "cart-variant",
-            },
-            description: "Compra",
-            supplier: {
-                id: "huiodsahoiu21h3u2io3h",
-                name: "Jacomar"
-            },
-            amount: 49.13,
-            due_date: "2022-04-09"
+    const toggleModalFilter = () => {
+        setModalFilter(!modalFilter);
+    }
+
+    const toggleDatePickerOpen = () => {
+        setDatePickerOpen(!datePickerOpen);
+    }
+
+    async function loadPage(pageNumber = page, shouldRefresh = false) {
+        if (total && pageNumber > total) return;
+
+        setLoading(true);
+
+        try {
+
+            let queryParams = '';
+
+            for (key in filters) {
+                let param = `filter[${key}]=${filters[key]}`;
+                queryParams = `${queryParams}&${param}`;
+            }
+
+            const response = await api.get(`/bill?page=${pageNumber}&per_page=8${queryParams}`);
+
+            setBillsTotal(response.data.additional.total);
+
+            const data = response.data.data;
+
+            const totalItems = response.data.pagination.total;
+
+            setTotal(Math.floor(totalItems / response.data.pagination.last_page));
+
+            setBills(shouldRefresh ? data : [...bills, ...data]);
+
+            setPage(pageNumber + 1);
+        } catch (error: any) {
+            showMessage({
+                message: `${error.response?.data?.message ?? 'Oops! Algo deu errado em nossos servidores.'}`,
+                type: "danger",
+                animated: true,
+                duration: 5000
+            });
         }
 
-    ]
+        setLoading(false);
+    }
 
     return (
         <Container>
@@ -189,8 +130,8 @@ const Dashboard: React.FC = () => {
             </Box>
 
             <Box flexDirection='row' width="90%">
-                <TouchableOpacity onPress={(event) => HandleSignOut()}>
-                    <Icon name="calendar-month-outline" size={24} color={theme.COLORS.DARK} />
+                <TouchableOpacity onPress={() => toggleModalFilter()}>
+                    <Icon name="filter-menu-outline" size={24} color={theme.COLORS.DARK} />
                 </TouchableOpacity>
                 <Icon name="plus" size={24} color={theme.COLORS.DARK} />
                 <TouchableOpacity onPress={() => toggleShowAmounts()}>
@@ -200,7 +141,7 @@ const Dashboard: React.FC = () => {
             <Box alignItems='flex-end'>
                 <Text>
                     <NumberFormat
-                        value={999999.99}
+                        value={billsTotal}
                         displayType="text"
                         thousandSeparator="."
                         decimalSeparator=','
@@ -212,13 +153,58 @@ const Dashboard: React.FC = () => {
             </Box>
 
             <FlatList
-                data={data}
+                data={bills}
                 renderItem={({ item }) => (<Bill bill={item} showAmounts={showAmounts} />)}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
                 onRefresh={refreshList}
                 refreshing={refreshing}
+                ListFooterComponent={loading ? <Loading /> : <></>}
+                onEndReached={() => loadPage()}
             />
+
+            <Modal
+                visible={modalFilter}
+                onDismiss={() => {
+                    toggleModalFilter()
+                    loadPage(1, true)
+                }}
+            >
+                <Box justifyContent='space-between' alignItems='center' flexDirection='row'>
+                    <Touchable onPress={() => {
+                        toggleDatePickerOpen();
+                        setDatePickerParameter('due_after');
+                    }}>
+                        <Icon name="calendar" size={24} color={theme.COLORS.DARK} />
+                        <Text fontWeight='bold'>Vencimento Inicial:</Text>
+                        <Text>{moment(filters.due_after).format('DD/MM/YYYY')}</Text>
+                    </Touchable>
+
+                    <Touchable onPress={() => {
+                        toggleDatePickerOpen();
+                        setDatePickerParameter('due_before');
+                    }}>
+                        <Icon name="calendar" size={24} color={theme.COLORS.DARK} />
+                        <Text fontWeight='bold'>Vencimento Final:</Text>
+                        <Text>{moment(filters.due_before).format('DD/MM/YYYY')}</Text>
+                    </Touchable>
+                </Box>
+            </Modal>
+
+            <DatePicker
+                date={new Date()}
+                modal
+                mode='date'
+                onCancel={() => toggleDatePickerOpen()}
+                onConfirm={(date) => {
+                    handleChangeFilters(datePickerParameter, moment(date).format('YYYY-MM-DD'))
+                }}
+                open={datePickerOpen}
+                title={null}
+                confirmText="Confirmar"
+                cancelText='Cancelar'
+            />
+
 
         </Container>
     )
